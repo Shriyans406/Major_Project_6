@@ -3,6 +3,7 @@ import { initCanvas } from "./canvas/initCanvas";
 import { attachCanvasEvents } from "./canvas/canvasEvents";
 import { useKeyboard } from "./hooks/useKeyboard";
 import { TOOLS } from "./tools/tools";
+import Toolbar from "./components/Toolbar.jsx"
 
 export default function App() {
   const canvasRef = useRef(null);
@@ -30,19 +31,19 @@ export default function App() {
   useKeyboard(setTool, fabricCanvas);
 
   return (
-    <div style={{ background: "#111", minHeight: "100vh", padding: 20 }}>
-      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-        <button onClick={() => setTool(TOOLS.SELECT)}>Select</button>
-        <button onClick={() => setTool(TOOLS.LINE)}>Line</button>
-        <button onClick={() => setTool(TOOLS.RECT)}>Rect</button>
-        <button onClick={() => setTool(TOOLS.CIRCLE)}>Circle</button>
-      </div>
+  <div style={{ background: "#0e0e0e", minHeight: "100vh", padding: 20 }}>
+    <Toolbar tool={tool} setTool={setTool} />
 
-      <canvas
-        ref={canvasRef}
-        style={{ border: "2px solid #666", display: "block" }}
-      />
-    </div>
-  );
+    <canvas
+      ref={canvasRef}
+      style={{
+        border: "1px solid #2a2a2a",
+        borderRadius: 10,
+        display: "block",
+      }}
+    />
+  </div>
+);
+
 }
 
