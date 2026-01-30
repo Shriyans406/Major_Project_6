@@ -1,64 +1,87 @@
 import { TOOLS } from "../tools/tools";
-import { startLine, updateLine } from "../tools/lineTool";
-import { startRect, updateRect } from "../tools/rectTool";
-import { startCircle, updateCircle } from "../tools/circleTool";
-import { snapPointer } from "./grid/snap";
-import {
-  enableSelection,
-  disableSelection,
-} from "./selection/selectionController";
+import { fabric } from "fabric";
 
-export function attachCanvasEvents({ canvas, toolRef, history }) {
+export function attachCanvasEvents({ canvas, toolRef }) {
   let drawing = false;
-  let start = { x: 0, y: 0 };
+  let start = null;
   let temp = null;
 
   canvas.on("mouse:down", (opt) => {
-    if (toolRef.current === TOOLS.SELECT) {
-      enableSelection(canvas);
-      return;
-    }
+    const tool = toolRef.current;
+    if (tool === TOOLS.SELECT) return;
 
-    disableSelection(canvas);
     drawing = true;
-
-    const raw = canvas.getPointer(opt.e);
-    const p = snapPointer(raw);
+    const p = canvas.getPointer(opt.e);
     start = p;
 
-    if (toolRef.current === TOOLS.LINE) temp = startLine(p);
-    if (toolRef.current === TOOLS.RECT) temp = startRect(p);
-    if (toolRef.current === TOOLS.CIRCLE) temp = startCircle(p);
+    if (tool === TOOLS.LINE) {
+      temp = new fabric.Line([p.x, p.y, p.x + 1, p.y + 1], {
+        stroke: "lime",
+        strokeWidth: 4,
+      });
+    }
 
-    canvas.add(temp);
+    if (tool === TOOLS.RECT) {
+      temp = new fabric.Rect({
+        left: p.x,
+        top: p.y,
+        width: 1,
+        height: 1,
+        fill: "rgba(0,255,255,0.3)",
+        stroke: "cyan",
+        strokeWidth: 3,
+      });
+    }
+
+    if (tool === TOOLS.CIRCLE) {
+      temp = new fabric.Circle({
+        left: p.x,
+        top: p.y,
+        radius: 1,
+        fill: "rgba(255,255,0,0.3)",
+        stroke: "yellow",
+        strokeWidth: 3,
+      });
+    }
+
+    if (temp) canvas.add(temp);
   });
 
   canvas.on("mouse:move", (opt) => {
     if (!drawing || !temp) return;
 
-    const raw = canvas.getPointer(opt.e);
-    const p = snapPointer(raw);
+    const p = canvas.getPointer(opt.e);
+    const sx = start.x;
+    const sy = start.y;
 
-    if (toolRef.current === TOOLS.LINE) updateLine(temp, p);
-    if (toolRef.current === TOOLS.RECT) updateRect(temp, start, p);
-    if (toolRef.current === TOOLS.CIRCLE) updateCircle(temp, start, p);
+    if (toolRef.current === TOOLS.LINE) {
+      temp.set({ x2: p.x, y2: p.y });
+    }
+
+    if (toolRef.current === TOOLS.RECT) {
+      temp.set({
+        left: Math.min(sx, p.x),
+        top: Math.min(sy, p.y),
+        width: Math.abs(p.x - sx),
+        height: Math.abs(p.y - sy),
+      });
+    }
+
+    if (toolRef.current === TOOLS.CIRCLE) {
+      const r = Math.hypot(p.x - sx, p.y - sy) / 2;
+      temp.set({
+        radius: r,
+        left: sx - r,
+        top: sy - r,
+      });
+    }
 
     canvas.renderAll();
   });
 
   canvas.on("mouse:up", () => {
-    if (temp) history.save();
     drawing = false;
     temp = null;
   });
-
-  //new ones
-
-  canvas.on("object:modified", () => {
-    history.save();
-  });
-
-  canvas.on("object:removed", () => {
-    history.save();
-  });
 }
+

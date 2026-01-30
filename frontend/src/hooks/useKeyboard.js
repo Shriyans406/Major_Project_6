@@ -11,7 +11,9 @@ export function useKeyboard(setTool, canvasRef) {
 
       if (e.key === "Delete" || e.key === "Backspace") {
         const canvas = canvasRef.current;
-        canvas.getActiveObjects().forEach(o => canvas.remove(o));
+        if (!canvas) return;
+
+        canvas.getActiveObjects().forEach((o) => canvas.remove(o));
         canvas.discardActiveObject();
         canvas.renderAll();
       }
