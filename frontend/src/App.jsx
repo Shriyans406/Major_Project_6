@@ -1,44 +1,36 @@
 import { useEffect, useRef, useState } from "react";
-import { initCanvas } from "./canvas/initCanvas";
-import { attachCanvasEvents } from "./canvas/canvasEvents";
-import { useKeyboard } from "./hooks/useKeyboard";
+import { fabric } from "fabric";
 import { TOOLS } from "./tools/tools";
-import Toolbar from "./components/Toolbar.jsx";
-import { attachSnapWhileMoving } from "./canvas/selection/selectionController";
-
-//new ones
-import { createHistoryManager } from "./history/historyManager";
-import { useUndoRedo } from "./hooks/useUndoRedo";
-import { setGridBackground } from "./canvas/grid/gridBackground";
+import { attachCanvasEvents } from "./canvas/canvasEvents";
+import {
+  enableSelection,
+  disableSelection,
+  attachSnapWhileMoving,
+} from "./canvas/selection/selectionController";
 
 export default function App() {
   const canvasRef = useRef(null);
-  const fabricCanvas = useRef(null);
+  const canvasObj = useRef(null);
 
   const [tool, setTool] = useState(TOOLS.SELECT);
   const toolRef = useRef(tool);
-
-  //new ones
-  const historyRef = useRef(null);
 
   useEffect(() => {
     toolRef.current = tool;
   }, [tool]);
 
   useEffect(() => {
-    const canvas = initCanvas(canvasRef.current);
-    fabricCanvas.current = canvas;
+    const canvas = new fabric.Canvas(canvasRef.current, {
+      width: 900,
+      height: 550,
+      backgroundColor: "#1e1e1e",
+    });
 
-    //new one
-    setGridBackground(canvas, 25);
-
-    historyRef.current = createHistoryManager(canvas);
-    historyRef.current.save(); // initial empty state
+    canvasObj.current = canvas;
 
     attachCanvasEvents({
       canvas,
       toolRef,
-      history: historyRef.current,
     });
 
     attachSnapWhileMoving(canvas);
@@ -46,21 +38,35 @@ export default function App() {
     return () => canvas.dispose();
   }, []);
 
-  useKeyboard(setTool, fabricCanvas);
-  useUndoRedo(historyRef);
+  // 🔑 THIS CONTROLS EVERYTHING
+  useEffect(() => {
+    const canvas = canvasObj.current;
+    if (!canvas) return;
+
+    if (tool === TOOLS.SELECT) {
+      enableSelection(canvas);
+    } else {
+      disableSelection(canvas);
+    }
+  }, [tool]);
 
   return (
-    <div style={{ background: "#0e0e0e", minHeight: "100vh", padding: 20 }}>
-      <Toolbar tool={tool} setTool={setTool} />
+    <div style={{ background: "#111", minHeight: "100vh", padding: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <button onClick={() => setTool(TOOLS.SELECT)}>Select</button>
+        <button onClick={() => setTool(TOOLS.LINE)}>Line</button>
+        <button onClick={() => setTool(TOOLS.RECT)}>Rect</button>
+        <button onClick={() => setTool(TOOLS.CIRCLE)}>Circle</button>
+      </div>
 
       <canvas
         ref={canvasRef}
         style={{
-          border: "1px solid #2a2a2a",
-          borderRadius: 10,
+          border: "2px solid #555",
           display: "block",
         }}
       />
     </div>
   );
 }
+

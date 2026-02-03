@@ -2,16 +2,20 @@ import { snapPointer } from "../grid/snap";
 
 export function enableSelection(canvas) {
   canvas.selection = true;
+  canvas.defaultCursor = "default";
 
   canvas.getObjects().forEach((obj) => {
     obj.selectable = true;
     obj.evented = true;
   });
+
+  canvas.requestRenderAll();
 }
 
 export function disableSelection(canvas) {
   canvas.discardActiveObject();
   canvas.selection = false;
+  canvas.defaultCursor = "crosshair";
 
   canvas.getObjects().forEach((obj) => {
     obj.selectable = false;
@@ -33,3 +37,4 @@ export function attachSnapWhileMoving(canvas) {
     });
   });
 }
+
